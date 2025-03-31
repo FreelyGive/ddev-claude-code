@@ -1,0 +1,6 @@
+#ddev-generated
+
+RUN apt-get update
+RUN npm install -g @anthropic-ai/claude-code
+
+RUN curl -sSL "https://raw.githubusercontent.com/upciti/wakemeops/main/assets/install_repository" | bash && apt install -y glab

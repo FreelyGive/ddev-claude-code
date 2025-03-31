@@ -1,3 +1,4 @@
+#ddev-generated
 hooks:
   post-start:
     - exec: ">> /var/www/html/.ddev/.claude.json && ln -s /var/www/html/.ddev/.claude.json ~/.claude.json"

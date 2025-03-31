@@ -13,6 +13,7 @@ project_files:
   - commands/web/claude
   - commands/web/glab
   - config.claude-code.yaml
+  - .claude.json
 
 post_install_actions:
  - chmod +x web-build/merge-gitignore.sh

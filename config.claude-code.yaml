@@ -1,0 +1,7 @@
+hooks:
+  post-start:
+    - exec: ">> /var/www/html/.ddev/.claude.json && ln -s /var/www/html/.ddev/.claude.json ~/.claude.json"
+    - exec: "mkdir -p /var/www/html/.ddev/.claude && ln -s /var/www/html/.ddev/.claude ~/.claude"
+
+web_environment:
+  - GLAB_CONFIG_DIR=/var/www/html/.ddev/.glab-cli/

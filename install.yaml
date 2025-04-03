@@ -8,13 +8,11 @@ name: claude-code
 # DDEV environment variables can be interpolated into these filenames
 project_files:
   - web-build/Dockerfile.claude-code
-  - web-build/copy.gitignore
-  - web-build/merge-gitignore.sh
+  - web-build/claude-code.gitignore
   - commands/web/claude
   - commands/web/glab
   - config.claude-code.yaml
   - .claude.json
 
 post_install_actions:
- - chmod +x web-build/merge-gitignore.sh
- - bash web-build/merge-gitignore.sh
+ - cat web-build/claude-code.gitignore >> .gitignore

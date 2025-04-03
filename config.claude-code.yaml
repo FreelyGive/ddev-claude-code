@@ -1,7 +1,7 @@
 #ddev-generated
 hooks:
   post-start:
-    - exec: "cat /var/www/html/.ddev/web-build/claude-code.gitignore >> /var/www/html/.ddev/.gitignore"
+    - exec: "tail -n +2 /var/www/html/.ddev/web-build/claude-code.gitignore >> /var/www/html/.ddev/.gitignore"
     - exec: ">> /var/www/html/.ddev/.claude.json && ln -s /var/www/html/.ddev/.claude.json ~/.claude.json"
     - exec: "mkdir -p /var/www/html/.ddev/.claude && ln -s /var/www/html/.ddev/.claude ~/.claude"
 

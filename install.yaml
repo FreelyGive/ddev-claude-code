@@ -15,4 +15,4 @@ project_files:
   - .claude.json
 
 post_install_actions:
- - cat web-build/claude-code.gitignore >> .gitignore
+ - tail -n +2 web-build/claude-code.gitignore >> .gitignore

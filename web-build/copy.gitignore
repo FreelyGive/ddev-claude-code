@@ -1,6 +1,6 @@
 #ddev-generated
 
 # Claude Code internal config
-/.ddev/.claude.json
-/.ddev/.claude/
-/.ddev/.glab-cli/
+/.claude.json
+/.claude/
+/.glab-cli/

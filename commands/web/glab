@@ -1,0 +1,10 @@
+#ddev-generated
+#!/bin/bash
+
+## Description: GitLab CLI
+## Usage: glab
+## Example: ddev glab [...]
+
+set -e
+
+glab $@

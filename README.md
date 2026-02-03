@@ -13,7 +13,7 @@ To let Claude interact with GitLab, you will need to authenticate `glab`. This
 can be done using `ddev glab auth login`. Configuration will be stored in
 `.ddev/.glab-cli/` and will also be persisted across restarts.
 
-## Drupal CLAUDE.me
+## Drupal CLAUDE.md
 For Drupal, we recommend using https://www.drupal.org/project/claude_code. You
 can install by running:
 

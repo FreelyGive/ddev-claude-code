@@ -6,12 +6,6 @@ Claude Code is installed inside the DDEV container and is accesible using
 interactively. Your configuration will be stored in `.ddev/.claude.json`
 and `.ddev/.claude/`, and will be persisted across restarts.
 
-To authenticate with a subscription, it may be difficult to copy the link
-depending on the terminal you are using. On macOS, you can use `iTerm 2`
-and `ddev ssh` into the container, then run claude code, and then copy
-the authentication link into a browser where you are logged in to
-claude.ai.
-
 You can copy in an existing `.ddev/.claude.json`, for example if you want to
 use an existing key, or allowed functions etc.
 

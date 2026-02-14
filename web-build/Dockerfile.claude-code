@@ -1,5 +1,11 @@
 #ddev-generated
 
-RUN npm install -g @anthropic-ai/claude-code
+# Use the native installer for Claude Code.
+# Claude Code needs to be installed to the user's local/bin, not root's.
+USER $username
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
+# Install GitLab support as root.
+USER root
+RUN apt-get update
 RUN curl -sSL "https://raw.githubusercontent.com/upciti/wakemeops/main/assets/install_repository" | bash && apt install -y glab

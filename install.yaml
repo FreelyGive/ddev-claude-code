@@ -13,3 +13,4 @@ project_files:
   - config.claude-code.yaml
   - claude-code/.claude.json
   - claude-code/.gitignore
+  - homeadditions/.bashrc.d/claude-code.sh

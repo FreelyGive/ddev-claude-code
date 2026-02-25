@@ -5,4 +5,7 @@ RUN curl -fsSL https://claude.ai/install.sh | sudo -u ${username} bash \
   && sudo -u ${username} mkdir -p /home/${username}/bin \
   && sudo -u ${username} ln -s /home/${username}/.local/bin/claude /home/${username}/bin/claude
 
-RUN curl -sSL "https://raw.githubusercontent.com/upciti/wakemeops/main/assets/install_repository" | bash && apt install -y glab
+# Install glab CLI.
+RUN curl -sSL "https://raw.githubusercontent.com/upciti/wakemeops/main/assets/install_repository" | bash \
+  && apt install -y glab \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*

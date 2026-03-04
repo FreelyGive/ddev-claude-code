@@ -1,8 +1,9 @@
 #ddev-generated
 hooks:
   post-start:
-    - exec: "[[ -f /var/www/html/.ddev/claude-code/.claude.json ]] || echo '{}' > /var/www/html/.ddev/claude-code/.claude.json && ln -s /var/www/html/.ddev/claude-code/.claude.json ~/.claude.json"
-    - exec: "mkdir -p /var/www/html/.ddev/claude-code/.claude && ln -s /var/www/html/.ddev/claude-code/.claude ~/.claude"
+    - exec: "[[ -f /var/www/html/.ddev/claude-code/.claude.json ]] || echo '{}' > /var/www/html/.ddev/claude-code/.claude.json"
+    - exec: "rm ~/.claude.json || true; ln -s /var/www/html/.ddev/claude-code/.claude.json ~/.claude.json"
+    - exec: "rm -rf ~/.claude || true; mkdir -p /var/www/html/.ddev/claude-code/.claude && ln -s /var/www/html/.ddev/claude-code/.claude ~/.claude"
 
 web_environment:
   - GLAB_CONFIG_DIR=/var/www/html/.ddev/.glab-cli/

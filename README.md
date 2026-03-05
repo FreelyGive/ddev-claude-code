@@ -21,3 +21,19 @@ can install by running:
 ddev composer config extra.drupal-scaffold.allowed-packages --json --merge '["drupal/claude_code"]'
 ddev composer require --dev drupal/claude_code
 ```
+
+## Updating Claude Code
+
+When using this addon, Claude Code will NOT be automatically updated.
+
+To update Claude Code, you can rebuild all ddev images with this command:
+
+```
+ddev utility rebuild
+```
+
+If you are running DDEV v.1.25.0 or higher, you can run:
+
+```
+ddev restart --no-cache
+```

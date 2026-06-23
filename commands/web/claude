@@ -7,4 +7,21 @@
 
 set -e
 
-claude $@
+# Set the terminal tab/window title to the DDEV project name so multiple
+# concurrent Claude Code sessions across projects are distinguishable.
+set_tab_title() {
+    printf '\033]0;%s - %s\007' "${DDEV_SITENAME}" "${1:-Claude Code}"
+}
+# Clear the title on exit and let the host shell's prompt re-set it. We can't
+# read the host's TERM_PROGRAM from inside the container, so don't guess at it.
+restore_tab_title() {
+    printf '\033]0;\007'
+}
+
+set_tab_title "Claude Code"
+trap restore_tab_title EXIT
+
+# Disable Claude Code's own terminal-title management so it doesn't overwrite
+# the project-prefixed title set above.
+export CLAUDE_CODE_DISABLE_TERMINAL_TITLE=1
+claude "$@"

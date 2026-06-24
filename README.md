@@ -9,10 +9,6 @@ and `.ddev/.claude/`, and will be persisted across restarts.
 You can copy in an existing `.ddev/.claude.json`, for example if you want to
 use an existing key, or allowed functions etc.
 
-To let Claude interact with GitLab, you will need to authenticate `glab`. This
-can be done using `ddev glab auth login`. Configuration will be stored in
-`.ddev/.glab-cli/` and will also be persisted across restarts.
-
 ## Drupal CLAUDE.md
 For Drupal, we recommend using https://www.drupal.org/project/claude_code. You
 can install by running:

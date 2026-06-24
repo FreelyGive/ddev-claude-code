@@ -9,7 +9,8 @@ name: claude-code
 project_files:
   - web-build/Dockerfile.claude-code
   - commands/web/claude
-  - commands/web/glab
   - config.claude-code.yaml
   - claude-code/.claude.json
   - claude-code/.gitignore
+
+ddev_version_constraint: '>= v1.24.3'

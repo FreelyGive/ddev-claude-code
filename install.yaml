@@ -12,3 +12,5 @@ project_files:
   - config.claude-code.yaml
   - claude-code/.claude.json
   - claude-code/.gitignore
+
+ddev_version_constraint: '>= v1.24.3'

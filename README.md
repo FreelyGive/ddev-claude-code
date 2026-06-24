@@ -9,7 +9,7 @@ and `.ddev/.claude/`, and will be persisted across restarts.
 You can copy in an existing `.ddev/.claude.json`, for example if you want to
 use an existing key, or allowed functions etc.
 
-## Drupal CLAUDE.me
+## Drupal CLAUDE.md
 For Drupal, we recommend using https://www.drupal.org/project/claude_code. You
 can install by running:
 

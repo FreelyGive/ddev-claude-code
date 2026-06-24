@@ -1,0 +1,151 @@
+#!/bin/bash
+
+#ddev-generated
+## Description: Check for and optionally apply Claude Code updates
+## Usage: claude-update [-y|-n]
+## Example: "ddev claude-update" prompts | "ddev claude-update -y" updates now | "ddev claude-update -n" only reports
+## CanRunGlobally: false
+
+set -eu -o pipefail
+
+# The add-on installs Claude Code with the official installer, which always tracks
+# the "latest" release channel, and `claude update` does the same. Compare against
+# that channel so the check, the in-container update, and a rebuild all agree.
+RELEASE_CHANNEL_URL="https://downloads.claude.ai/claude-code-releases/latest"
+
+# Parse flags:
+#   -y / DDEV_CLAUDE_CODE_AUTOUPDATE  update now, no questions asked
+#   -n                                only report whether an update exists
+#   (nothing)                         prompt; or, with no terminal (e.g. a
+#                                     post-start hook), behave like -n
+mode="prompt"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -y|--yes) mode="yes" ;;
+    -n|--no) mode="no" ;;
+    -h|--help) echo "Usage: ddev claude-update [-y|-n]"; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; exit 1 ;;
+  esac
+  shift
+done
+if [ "$mode" = "prompt" ] && [ -n "${DDEV_CLAUDE_CODE_AUTOUPDATE:-}" ]; then
+  mode="yes"
+fi
+
+# Highest of two X.Y.Z versions.
+highest_version() {
+  printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1
+}
+
+# Echo the persist command (`ddev restart --no-cache`) when DDEV is new enough to
+# support it (v1.25.0+), otherwise echo nothing.
+nocache_command() {
+  local ddev_ver min="1.25.0"
+  ddev_ver="$(ddev --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)" || true
+  if [ -n "$ddev_ver" ] && [ "$(highest_version "$min" "$ddev_ver")" = "$ddev_ver" ]; then
+    echo "ddev restart --no-cache"
+  fi
+}
+
+# Update Claude Code inside the running web container. This lasts until the next
+# image rebuild. ~/.local/bin is forced onto PATH so the updater doesn't warn
+# about it (the add-on exposes claude via ~/bin instead).
+do_update() {
+  ddev exec 'PATH="$HOME/.local/bin:$PATH" claude update'
+}
+
+# Explain that an in-container update is not permanent, and how to make it so.
+print_persist_note() {
+  local nc
+  nc="$(nocache_command)"
+  echo "This updates the running container only and is lost on the next rebuild."
+  if [ -n "$nc" ]; then
+    echo "To make it permanent, run: ${nc}"
+  else
+    echo "To make it permanent, upgrade to DDEV v1.25.0+ and run 'ddev restart --no-cache'."
+  fi
+}
+
+# The -n / non-interactive report.
+report_only() {
+  local nc
+  nc="$(nocache_command)"
+  echo "A Claude Code update is available (${current} -> ${latest})."
+  echo "  Update now (until next rebuild):  ddev claude-update -y"
+  if [ -n "$nc" ]; then
+    echo "  Update permanently:               ${nc}"
+  else
+    echo "  Update permanently:               upgrade to DDEV v1.25.0+, then 'ddev restart --no-cache'"
+  fi
+}
+
+# Current version inside the web container (leading X.Y.Z of `claude --version`).
+current="$(ddev exec claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)" || true
+if [ -z "$current" ]; then
+  echo "Claude Code is not installed in the web container yet; skipping update check."
+  exit 0
+fi
+
+# Latest published version. Fail soft so a post-start hook never breaks `ddev start`.
+latest="$(curl -fsSL --max-time 5 "$RELEASE_CHANNEL_URL" 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' | head -n1)" || true
+if [ -z "$latest" ]; then
+  echo "Could not reach the Claude Code release server; skipping update check."
+  exit 0
+fi
+
+# Already current (or somehow ahead of the published version)? Stay silent in the
+# post-start hook (prompt mode with no terminal) to avoid noise on every start.
+if [ "$current" = "$latest" ] || [ "$(highest_version "$current" "$latest")" = "$current" ]; then
+  if [ "$mode" != "prompt" ] || [ -t 0 ]; then
+    echo "Claude Code is up to date (${current})."
+  fi
+  exit 0
+fi
+
+case "$mode" in
+  yes)
+    echo "Updating Claude Code (${current} -> ${latest})..."
+    do_update
+    echo
+    print_persist_note
+    ;;
+  no)
+    report_only
+    ;;
+  prompt)
+    # No terminal (post-start hook, CI, piped): report and exit, like -n.
+    if [ ! -t 0 ]; then
+      report_only
+      exit 0
+    fi
+    nc="$(nocache_command)"
+    echo "A Claude Code update is available (${current} -> ${latest})."
+    echo
+    echo "  [i] Update now in the running container (fast; lost on next rebuild)"
+    if [ -n "$nc" ]; then
+      echo "  [p] Update permanently by rebuilding the image (${nc})"
+    fi
+    echo "  [c] Cancel"
+    echo
+    read -r -p "Choose [i/p/c]: " choice
+    case "$choice" in
+      i|I)
+        echo "Updating Claude Code (${current} -> ${latest})..."
+        do_update
+        echo
+        print_persist_note
+        ;;
+      p|P)
+        if [ -n "$nc" ]; then
+          echo "Rebuilding to update Claude Code permanently..."
+          exec ${nc}
+        else
+          echo "A permanent update needs DDEV v1.25.0+. Upgrade DDEV, then run 'ddev restart --no-cache'."
+        fi
+        ;;
+      *)
+        echo "Cancelled."
+        ;;
+    esac
+    ;;
+esac

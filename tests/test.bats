@@ -116,6 +116,129 @@ teardown() {
   assert_config_round_trips
 }
 
+# `ddev claude-update` reports and applies Claude Code updates. Force an older version
+# into the running container to create a deterministic "update available" state, then
+# drive the command through its report (-n), update (-y), up-to-date and env-var paths.
+@test "claude-update flow" {
+  set -eu -o pipefail
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+  run ddev restart -y
+  assert_success
+  refute_hook_failure
+
+  # Discover a real, downloadable version older than "latest" to pin as the stale
+  # starting point. There's no version-index endpoint, but each version exposes a
+  # manifest.json (200 if it exists, 404 otherwise), so walk the patch number down
+  # from latest until one resolves. This stays correct as releases come and go.
+  local base="https://downloads.claude.ai/claude-code-releases"
+  local latest_version maj min pat old_version=""
+  latest_version="$(curl -fsSL --max-time 10 "$base/latest")"
+  IFS=. read -r maj min pat <<< "${latest_version}"
+  for ((p = pat - 1; p >= 0 && p > pat - 50; p--)); do
+    if curl -fs --max-time 10 -o /dev/null "$base/${maj}.${min}.${p}/manifest.json"; then
+      old_version="${maj}.${min}.${p}"
+      break
+    fi
+  done
+  [ -n "${old_version}" ] || fail "no Claude Code version older than ${latest_version} found to test against"
+  echo "# pinning old_version=${old_version} (latest=${latest_version})" >&3
+
+  # Pin the old version. The add-on exposes claude via ~/bin, but its native updater
+  # wants ~/.local/bin on PATH, so add it here too.
+  run ddev exec 'PATH="$HOME/.local/bin:$PATH" claude install '"${old_version}"' --force'
+  assert_success
+  run ddev exec claude --version
+  assert_success
+  assert_output --partial "${old_version}"
+
+  # -n reports an update is available but must NOT change the installed version.
+  run ddev claude-update -n
+  assert_success
+  assert_output --partial "update is available"
+  assert_output --partial "${old_version}"
+  run ddev exec claude --version
+  assert_output --partial "${old_version}"
+
+  # -y applies the instant update, moving the version from the pin up to latest.
+  run ddev claude-update -y
+  assert_success
+  run ddev exec claude --version
+  assert_success
+  assert_output --partial "${latest_version}"
+
+  # Now current: -n reports up to date.
+  run ddev claude-update -n
+  assert_success
+  assert_output --partial "up to date"
+
+  # The DDEV_CLAUDE_CODE_AUTOUPDATE host env var turns a flagless run into an update.
+  # Re-pin the old version first so this genuinely exercises the update path rather
+  # than running against the now up-to-date system.
+  run ddev exec 'PATH="$HOME/.local/bin:$PATH" claude install '"${old_version}"' --force'
+  assert_success
+  run ddev exec claude --version
+  assert_output --partial "${old_version}"
+  export DDEV_CLAUDE_CODE_AUTOUPDATE=1
+  run ddev claude-update
+  unset DDEV_CLAUDE_CODE_AUTOUPDATE
+  assert_success
+  run ddev exec claude --version
+  assert_output --partial "${latest_version}"
+}
+
+# The post-start hook runs `ddev claude-update` on every start. By default it only
+# reports; with DDEV_CLAUDE_CODE_AUTOUPDATE set it applies the update. Bake an old
+# version into the image so a freshly-started container is genuinely out of date,
+# then restart with and without the env var to prove both hook behaviours.
+@test "post-start hook auto-updates when enabled" {
+  set -eu -o pipefail
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  # Discover a real, downloadable version older than latest (see "claude-update flow").
+  local base="https://downloads.claude.ai/claude-code-releases"
+  local latest_version maj min pat old_version=""
+  latest_version="$(curl -fsSL --max-time 10 "$base/latest")"
+  IFS=. read -r maj min pat <<< "${latest_version}"
+  for ((p = pat - 1; p >= 0 && p > pat - 50; p--)); do
+    if curl -fs --max-time 10 -o /dev/null "$base/${maj}.${min}.${p}/manifest.json"; then
+      old_version="${maj}.${min}.${p}"
+      break
+    fi
+  done
+  [ -n "${old_version}" ] || fail "no Claude Code version older than ${latest_version} found to test against"
+  echo "# baking old_version=${old_version} (latest=${latest_version})" >&3
+
+  # Pin that old version into the built image so a started container is out of date.
+  # Mirrors the add-on's own install line but targets a specific version.
+  cat >> "${TESTDIR}/.ddev/web-build/Dockerfile.claude-code" <<EOF
+RUN curl -fsSL https://claude.ai/install.sh | sudo -u \${username} bash -s -- ${old_version}
+EOF
+
+  # First start builds the old image. Without the env var the hook only reports, so
+  # the container stays on the old version (this also proves no surprise auto-update).
+  run ddev restart -y
+  assert_success
+  refute_hook_failure
+  run ddev exec claude --version
+  assert_success
+  assert_output --partial "${old_version}"
+
+  # With the env var, the post-start hook applies the update during start. The image
+  # is unchanged, so the container restarts on the old version and the hook updates it.
+  export DDEV_CLAUDE_CODE_AUTOUPDATE=1
+  run ddev restart -y
+  unset DDEV_CLAUDE_CODE_AUTOUPDATE
+  assert_success
+  refute_hook_failure
+  run ddev exec claude --version
+  assert_success
+  assert_output --partial "${latest_version}"
+}
+
 # bats test_tags=release
 @test "install from release" {
   set -eu -o pipefail

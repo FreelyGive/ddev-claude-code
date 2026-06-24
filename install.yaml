@@ -9,6 +9,7 @@ name: claude-code
 project_files:
   - web-build/Dockerfile.claude-code
   - commands/web/claude
+  - commands/host/claude-update
   - config.claude-code.yaml
   - claude-code/.claude.json
   - claude-code/.gitignore

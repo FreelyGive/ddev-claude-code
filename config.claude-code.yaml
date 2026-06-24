@@ -4,3 +4,6 @@ hooks:
     - exec: "[[ -f /var/www/html/.ddev/claude-code/.claude.json ]] || echo '{}' > /var/www/html/.ddev/claude-code/.claude.json"
     - exec: "rm ~/.claude.json || true; ln -s /var/www/html/.ddev/claude-code/.claude.json ~/.claude.json"
     - exec: "rm -rf ~/.claude || true; mkdir -p /var/www/html/.ddev/claude-code/.claude && ln -s /var/www/html/.ddev/claude-code/.claude ~/.claude"
+    # Report (or, with DDEV_CLAUDE_CODE_AUTOUPDATE set, apply) any Claude Code update.
+    # Runs on the host so it can read that env var and offer `ddev restart --no-cache`.
+    - exec-host: "ddev claude-update"

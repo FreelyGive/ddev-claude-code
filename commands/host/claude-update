@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #ddev-generated
 ## Description: Check for and optionally apply Claude Code updates

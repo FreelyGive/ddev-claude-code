@@ -1,5 +1,5 @@
 #ddev-generated
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## Description: Claude Code!
 ## Usage: claude

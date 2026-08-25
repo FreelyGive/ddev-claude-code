@@ -16,8 +16,8 @@ RELEASE_CHANNEL_URL="https://downloads.claude.ai/claude-code-releases/latest"
 # Parse flags:
 #   -y / DDEV_CLAUDE_CODE_AUTOUPDATE  update now, no questions asked
 #   -n                                only report whether an update exists
-#   (nothing)                         prompt; or, with no terminal (e.g. a
-#                                     post-start hook), behave like -n
+#   (nothing)                         prompt; or, with no interactive terminal,
+#                                     behave like -n
 mode="prompt"
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -28,7 +28,9 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-if [ "$mode" = "prompt" ] && [ -n "${DDEV_CLAUDE_CODE_AUTOUPDATE:-}" ]; then
+# The env var beats -n too, so the post-start hook -- which passes -n to stay
+# non-interactive -- still auto-updates for anyone who opted in.
+if [ "$mode" != "yes" ] && [ -n "${DDEV_CLAUDE_CODE_AUTOUPDATE:-}" ]; then
   mode="yes"
 fi
 
@@ -113,8 +115,10 @@ case "$mode" in
     report_only
     ;;
   prompt)
-    # No terminal (post-start hook, CI, piped): report and exit, like -n.
-    if [ ! -t 0 ]; then
+    # No interactive terminal (CI, piped, or a DDEV hook whose output we do not own):
+    # report and exit, like -n. Both ends must be a tty -- a hook can hand us a tty on
+    # stdin while capturing stdout, and prompting there hangs the start that spawned us.
+    if [ ! -t 0 ] || [ ! -t 1 ]; then
       report_only
       exit 0
     fi

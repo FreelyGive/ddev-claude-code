@@ -186,6 +186,17 @@ teardown() {
   assert_success
   run ddev exec claude --version
   assert_output --partial "${latest_version}"
+
+  # The env var also beats an explicit -n. The post-start hook passes -n so it can
+  # never prompt, so opting into auto-updates has to keep working through that flag.
+  run ddev exec 'PATH="$HOME/.local/bin:$PATH" claude install '"${old_version}"' --force'
+  assert_success
+  export DDEV_CLAUDE_CODE_AUTOUPDATE=1
+  run ddev claude-update -n
+  unset DDEV_CLAUDE_CODE_AUTOUPDATE
+  assert_success
+  run ddev exec claude --version
+  assert_output --partial "${latest_version}"
 }
 
 # The post-start hook runs `ddev claude-update` on every start. By default it only

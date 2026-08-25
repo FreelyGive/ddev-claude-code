@@ -6,4 +6,6 @@ hooks:
     - exec: "rm -rf ~/.claude || true; mkdir -p /var/www/html/.ddev/claude-code/.claude && ln -s /var/www/html/.ddev/claude-code/.claude ~/.claude"
     # Report (or, with DDEV_CLAUDE_CODE_AUTOUPDATE set, apply) any Claude Code update.
     # Runs on the host so it can read that env var and offer `ddev restart --no-cache`.
-    - exec-host: "ddev claude-update"
+    # -n keeps it non-interactive: prompting here would block the `ddev start` that
+    # spawned the hook, on a terminal DDEV does not own.
+    - exec-host: "ddev claude-update -n"

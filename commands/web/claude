@@ -4,6 +4,7 @@
 ## Description: Claude Code!
 ## Usage: claude
 ## Example: ddev claude [...]
+## ExecRaw: true
 
 set -e
 
